@@ -8,12 +8,33 @@
 using namespace std;
 
 void drawSquare();
+void run();
+
 mutex myMutex;
+bool keyPressed = false;
+
+int main(void)
+{   
+    srand(time(NULL));
+    initscr();
+    curs_set(0);
+    nodelay(stdscr, TRUE);
+    noecho();
+    drawSquare();
+    
+    run();
+
+    endwin();
+    return 0;
+}
 
 struct Bullet
 {   
-    void run(int number)
+    void run()
     {   
+        int ch;
+        
+
         // Możliwe początkowe kierunki poruszania się pocisku:
         // [3, 1]
         // [2, 1]
@@ -52,18 +73,18 @@ struct Bullet
         {   
             myMutex.lock();
             //debug //////////////////
-            mvwprintw(stdscr, 18 + number, 0, "Watek:[%d](%c) bounces: {%d}", 
+            mvwprintw(stdscr, 18 , 0, "Watek:[%d](%c) bounces: {%d}", 
                                          this_thread::get_id(), bullet, numberOfBounces);
             //////////////////////////
             mvwprintw(stdscr, currentLocation.second, currentLocation.first, "%c", bullet);
             refresh();
             myMutex.unlock();
 
-            this_thread::sleep_for(std::chrono::milliseconds(800)); 
+            this_thread::sleep_for(std::chrono::milliseconds(400)); 
 
-            myMutex.lock();
+            //myMutex.lock();
             mvwprintw(stdscr, currentLocation.second, currentLocation.first, "%c", rubber);
-            myMutex.unlock();
+           // myMutex.unlock();
 
             currentLocation.first += direction.first;
             currentLocation.second -= direction.second;
@@ -93,35 +114,35 @@ struct Bullet
                 direction.second = -direction.second;
                 numberOfBounces++;
             } 
+            
+            // Sprawdzenie czy klawisz został wciśnięty
+            // 113 = 'q'
+            if((ch = getch()) == 113)
+            {
+                keyPressed = true;
+                return;
+            }
         }
         //debug //////////////////
-        myMutex.lock();
-        mvwprintw(stdscr, 18 + number, 0, "%s:[%d](%c) %s", "Watek ", 
+        //myMutex.lock();
+        mvwprintw(stdscr, 19, 0, "%s:[%d](%c) %s", "Watek ", 
                                          this_thread::get_id(), bullet, "zakonczyl prace!");
-        myMutex.unlock();
+        //  myMutex.unlock();
         //////////////////////////
     }    
 };
 
-int main(void)
+void run()
 {   
     Bullet bullet;
-    srand(time(NULL));
-    initscr();
-    curs_set(0);
-    drawSquare();
+    int returnValue;
 
-    thread first(&Bullet::run, bullet, 0);
-    thread second(&Bullet::run, bullet, 1);
-    thread third(&Bullet::run, bullet, 2);
+    while(keyPressed == false)
+    {
+        thread bulletThread(&Bullet::run, bullet);
 
-    first.join();
-    second.join();
-    third.join();
-
-    getch();
-    endwin();
-    return 0;
+        bulletThread.join();
+    }
 }
 
 void drawSquare()
