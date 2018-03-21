@@ -1,1 +1,1 @@
-# SO2 - C++ project
+# SO2 - (mainly)C++11 projects with the use of threads.
