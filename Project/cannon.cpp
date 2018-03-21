@@ -29,7 +29,7 @@ class Bullet
         char bullet;
         bool passedHalfOnce;
         pair<int, int> direction;
-        pair<int, int> currentLocation = make_pair(1, 12);
+        pair<int, int> currentLocation = make_pair(2, 11);
         
     public:
         void run()
@@ -48,26 +48,26 @@ class Bullet
                 lck.lock();
                 cv.wait(lck, [](){return numberOfBullets != 0 || !keyNotPressed;});
 
-                if(currentLocation.first > 12)
+                if(currentLocation.first >= 12)
                 {
                     currentLocation.first = 12;
                     direction.first = -direction.first;
                     numberOfBounces++;
                 }
-                if(currentLocation.first < 1)
+                if(currentLocation.first <= 1)
                 {
                     currentLocation.first = 1;
                     direction.first = -direction.first;
                     numberOfBounces++;            
                 }
 
-                if(currentLocation.second > 12)
+                if(currentLocation.second >= 12)
                 {
                     currentLocation.second = 12;
                     direction.second = -direction.second;
                     numberOfBounces++;
                 }
-                if(currentLocation.second < 1)
+                if(currentLocation.second <= 1)
                 {
                     currentLocation.second = 1;
                     direction.second = -direction.second;
@@ -90,7 +90,7 @@ class Bullet
                         
                     }
                     else
-                        if(numberOfBounces == 3)
+                        if(numberOfBounces >= 3)
                         {
                             numberOfBullets--;  
                         }
@@ -106,8 +106,15 @@ class Bullet
                 lck.lock();
                 mvwprintw(stdscr, currentLocation.second, currentLocation.first, "%c", 
                                                           currentLocation.second == 7 ? '-' : rubber);
-                currentLocation.first += direction.first;
-                currentLocation.second -= direction.second;
+                                                          
+                if(numberOfBounces>=3)
+                    refresh();
+                else
+                {
+                    currentLocation.first += direction.first;
+                    currentLocation.second -= direction.second;
+                }
+
                 lck.unlock();
             }
         } 
@@ -123,11 +130,10 @@ class Threads
             Bullet bullet;
             vector<thread> threads; 
 
-            while(keyNotPressed)
+            while(keyNotPressed = (getch() != KEY_Q))
             {   
                 threads.push_back(thread(&Bullet::run, bullet)); 
-                this_thread::sleep_for(chrono::milliseconds(4000));
-                keyNotPressed = (getch() != KEY_Q);
+                this_thread::sleep_for(chrono::milliseconds(3000));
             }
             cv.notify_all();
 
